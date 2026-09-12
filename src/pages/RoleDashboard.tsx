@@ -1,79 +1,111 @@
-import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth';
-import { actionsFor, ROLE_DESCRIPTIONS, ROLE_LABELS } from '../access';
+import { ROLE_DESCRIPTIONS, ROLE_LABELS } from '../access';
 import Icon from '../components/Icon';
-import { Card } from '../components/ui';
 
-const roleCards:Record<string,Array<{title:string;desc:string;to?:string;icon:string;permission?:string}>>={
- receptionist:[
-  {title:"Today's Appointments",desc:'View bookings, check arrivals and manage appointment workflow.',to:'/appointments',icon:'calendar',permission:'appointments.view'},
-  {title:'Patient Service Requests',desc:'Follow service requests and front-desk coordination.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Doctors & Availability',desc:'Quick access to doctor records used by reception.',to:'/doctors',icon:'doctor',permission:'doctors.view'},
-  {title:'Notifications',desc:'See operational notices and updates assigned to you.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- hr:[
-  {title:'Employees & HR',desc:'Employee records, attendance, leave and HR operations.',to:'/hr',icon:'hr'},
-  {title:'Staff Access',desc:'Review staff accounts when your permissions allow it.',to:'/staff',icon:'users',permission:'accounts.approve'},
-  {title:'Notifications',desc:'HR notices, actions and platform messages.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- accountant:[
-  {title:'Service Requests',desc:'Review billable services and operational requests.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Services',desc:'Review service catalog and pricing information.',to:'/services',icon:'money',permission:'services.view'},
-  {title:'Notifications',desc:'Finance-related notices and assigned actions.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- cashier:[
-  {title:'Appointments',desc:'Review appointments related to payment collection.',to:'/appointments',icon:'calendar',permission:'appointments.view'},
-  {title:'Service Requests',desc:'Review service requests requiring cashier handling.',to:'/requests',icon:'money',permission:'requests.view'},
-  {title:'Notifications',desc:'Payment and front-desk notices.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- doctor_coordinator:[
-  {title:'Doctors',desc:'Coordinate doctor records, schedules and availability.',to:'/doctors',icon:'doctor',permission:'doctors.view'},
-  {title:'Appointments',desc:'Monitor doctor appointment workload.',to:'/appointments',icon:'calendar',permission:'appointments.view'},
-  {title:'Notifications',desc:'Medical affairs and scheduling notices.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- doctor:[
-  {title:'My Appointments',desc:'Access appointment workflow available to your role.',to:'/appointments',icon:'calendar',permission:'appointments.view'},
-  {title:'Service Requests',desc:'Review clinical service requests available to you.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Notifications',desc:'Clinical notices and updates.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- nurse:[
-  {title:'Appointments',desc:'View appointment information available to nursing staff.',to:'/appointments',icon:'calendar',permission:'appointments.view'},
-  {title:'Service Requests',desc:'Access nursing-related service workflow.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Notifications',desc:'Nursing notices and operational updates.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- lab_staff:[
-  {title:'Investigation Services',desc:'Access laboratory services and investigation requests.',to:'/services',icon:'services',permission:'services.view'},
-  {title:'Service Requests',desc:'Work with laboratory-related requests available to your role.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Notifications',desc:'Laboratory notices and assignments.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- radiology_staff:[
-  {title:'Radiology Services',desc:'Access radiology services available in the hospital.',to:'/services',icon:'services',permission:'services.view'},
-  {title:'Service Requests',desc:'Work with imaging-related requests available to your role.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Notifications',desc:'Radiology notices and assignments.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- pharmacy_staff:[
-  {title:'Service Requests',desc:'Review pharmacy-related operational requests.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Services',desc:'Review available hospital services relevant to pharmacy workflow.',to:'/services',icon:'services',permission:'services.view'},
-  {title:'Notifications',desc:'Pharmacy notices and assignments.',to:'/notifications',icon:'bell',permission:'notifications.view'},
- ],
- service_coordinator:[
-  {title:'Services',desc:'Manage the services visible to your role.',to:'/services',icon:'services',permission:'services.view'},
-  {title:'Service Requests',desc:'Coordinate home-service and package requests.',to:'/requests',icon:'requests',permission:'requests.view'},
-  {title:'Appointments',desc:'Review appointment dependencies where permitted.',to:'/appointments',icon:'calendar',permission:'appointments.view'},
- ],
+type ActionCard={title:string;subtitle:string;to:string;icon:string;permission?:string;tone:string};
+type RoleConfig={headline:string;subheadline:string;metrics:Array<{label:string;value:string;note:string;icon:string;tone:string}>;actions:ActionCard[];focus:string[]};
+
+const configs:Record<string,RoleConfig>={
+  receptionist:{
+    headline:'Front Desk Command Center',
+    subheadline:'Appointments, patient arrival, check-in and reception workflow in one place.',
+    metrics:[
+      {label:"Today's Appointments",value:'Open',note:'View today’s booking list',icon:'calendar',tone:'mint'},
+      {label:'Patient Queue',value:'Live',note:'Manage arrivals and waiting flow',icon:'users',tone:'blue'},
+      {label:'Check-In',value:'Ready',note:'Handle patient arrival workflow',icon:'health',tone:'violet'},
+      {label:'Service Requests',value:'Open',note:'Review reception requests',icon:'requests',tone:'orange'},
+    ],
+    actions:[
+      {title:'Appointments',subtitle:'View, coordinate and manage bookings',to:'/appointments',icon:'calendar',permission:'appointments.view',tone:'mint'},
+      {title:'Patient Check-In',subtitle:'Open the front-desk appointment workflow',to:'/appointments',icon:'health',permission:'appointments.view',tone:'blue'},
+      {title:'Doctors & Availability',subtitle:'Find doctors available for patients',to:'/doctors',icon:'doctor',permission:'doctors.view',tone:'violet'},
+      {title:'Service Requests',subtitle:'Follow patient and service requests',to:'/requests',icon:'requests',permission:'requests.view',tone:'orange'},
+      {title:'Notifications',subtitle:'Read reception notices and updates',to:'/notifications',icon:'bell',permission:'notifications.view',tone:'slate'},
+    ],
+    focus:['Patient arrival & check-in','Booking coordination','Waiting queue','Doctor availability','Patient service requests']
+  },
+  doctor:{
+    headline:'Doctor Workspace',subheadline:'Your clinical schedule and assigned workflow.',
+    metrics:[{label:'Appointments',value:'Today',note:'Your available appointment workflow',icon:'calendar',tone:'mint'},{label:'Clinical Requests',value:'Open',note:'Assigned service requests',icon:'requests',tone:'blue'},{label:'Notifications',value:'Live',note:'Clinical notices',icon:'bell',tone:'violet'},{label:'Access',value:'Secure',note:'Role-based authority',icon:'shield',tone:'slate'}],
+    actions:[{title:'My Appointments',subtitle:'Open appointment workflow',to:'/appointments',icon:'calendar',permission:'appointments.view',tone:'mint'},{title:'Clinical Requests',subtitle:'Review available requests',to:'/requests',icon:'requests',permission:'requests.view',tone:'blue'},{title:'Notifications',subtitle:'Clinical updates and notices',to:'/notifications',icon:'bell',permission:'notifications.view',tone:'slate'}],
+    focus:['Assigned appointments','Clinical requests','Patient workflow','Clinical notifications']
+  },
+  nurse:{
+    headline:'Nursing Workspace',subheadline:'Patient-support workflow and nursing operations.',
+    metrics:[{label:'Patient Queue',value:'Live',note:'Nursing workflow',icon:'users',tone:'mint'},{label:'Appointments',value:'Open',note:'Available appointment context',icon:'calendar',tone:'blue'},{label:'Requests',value:'Open',note:'Nursing-related requests',icon:'requests',tone:'violet'},{label:'Notifications',value:'Live',note:'Operational updates',icon:'bell',tone:'slate'}],
+    actions:[{title:'Appointments',subtitle:'View nursing appointment context',to:'/appointments',icon:'calendar',permission:'appointments.view',tone:'mint'},{title:'Service Requests',subtitle:'Nursing-related workflow',to:'/requests',icon:'requests',permission:'requests.view',tone:'blue'},{title:'Notifications',subtitle:'Nursing notices and updates',to:'/notifications',icon:'bell',permission:'notifications.view',tone:'slate'}],
+    focus:['Patient support','Assigned nursing work','Escalations','Operational updates']
+  },
+  hr:{
+    headline:'Human Resources Workspace',subheadline:'Employee administration, leave, access and workforce coordination.',
+    metrics:[{label:'Employees',value:'Manage',note:'HR employee workspace',icon:'users',tone:'mint'},{label:'Leave & HR',value:'Open',note:'HR administration',icon:'hr',tone:'blue'},{label:'Access',value:'Controlled',note:'Permission-based staff access',icon:'shield',tone:'violet'},{label:'Notifications',value:'Live',note:'HR notices',icon:'bell',tone:'slate'}],
+    actions:[{title:'HR & Leave',subtitle:'Open employee HR workflow',to:'/hr',icon:'hr',tone:'mint'},{title:'Staff & Access',subtitle:'Review staff access where authorized',to:'/staff',icon:'users',permission:'accounts.approve',tone:'blue'},{title:'Notifications',subtitle:'HR notices and assigned actions',to:'/notifications',icon:'bell',permission:'notifications.view',tone:'slate'}],
+    focus:['Employee records','Leave workflow','Staff access','HR coordination']
+  },
+  cashier:{
+    headline:'Cashier Workspace',subheadline:'Payment-related front-desk workflow and service requests.',
+    metrics:[{label:'Appointments',value:'Open',note:'Payment-linked appointments',icon:'calendar',tone:'mint'},{label:'Payment Requests',value:'Open',note:'Cashier service workflow',icon:'money',tone:'blue'},{label:'Notifications',value:'Live',note:'Payment updates',icon:'bell',tone:'violet'},{label:'Access',value:'Secure',note:'Cashier-only authority',icon:'shield',tone:'slate'}],
+    actions:[{title:'Appointments',subtitle:'Review appointments requiring cashier handling',to:'/appointments',icon:'calendar',permission:'appointments.view',tone:'mint'},{title:'Service Requests',subtitle:'Open payment-related requests',to:'/requests',icon:'money',permission:'requests.view',tone:'blue'},{title:'Notifications',subtitle:'Cashier notices and updates',to:'/notifications',icon:'bell',permission:'notifications.view',tone:'slate'}],
+    focus:['Payment handling','Receipts','Appointment payment context','Cashier notices']
+  }
 };
 
+function fallback(role:string):RoleConfig{
+  return {headline:ROLE_LABELS[role]||'My Workspace',subheadline:ROLE_DESCRIPTIONS[role]||'Your role-based Hayat workspace.',metrics:[{label:'Workspace',value:'Ready',note:'Role-based dashboard',icon:'dashboard',tone:'mint'},{label:'Permissions',value:'Active',note:'Backend-controlled access',icon:'shield',tone:'blue'},{label:'Notifications',value:'Live',note:'Operational updates',icon:'bell',tone:'violet'},{label:'Security',value:'Protected',note:'Authorized modules only',icon:'health',tone:'slate'}],actions:[{title:'Notifications',subtitle:'Open your available notifications',to:'/notifications',icon:'bell',permission:'notifications.view',tone:'slate'}],focus:['Role-specific operations','Authorized modules','Secure access']};
+}
+
 export default function RoleDashboard(){
- const a=useAuth(); const p=a.provider; if(!p)return null;
- const role=p.role; const permissions=new Set(p.permissions??[]);
- const cards=(roleCards[role]??[]).filter(c=>!c.permission||permissions.has(c.permission));
- const quick=actionsFor(p).slice(0,6);
- const accessList=useMemo(()=>Array.from(permissions).sort(),[p.permissions]);
- return <>
-  <div className="welcome-row"><div><div className="eyebrow">YOUR WORKSPACE</div><h1>Welcome back, {p.full_name||ROLE_LABELS[role]||'Hayat User'} <span className="wave">👋</span></h1><p>{ROLE_DESCRIPTIONS[role]||'Your dashboard shows only the functions assigned to your account.'}</p></div><div className="workspace-role"><span>Position</span><strong>{ROLE_LABELS[role]||role.replaceAll('_',' ')}</strong>{p.department_name&&<small>{p.department_name}</small>}</div></div>
-  <div className="feature-grid">{cards.map(c=><Link key={c.title} className="feature-card" to={c.to||'/'}><div className="feature-icon"><Icon name={c.icon} size={24}/></div><div><h3>{c.title}</h3><p>{c.desc}</p></div><Icon name="arrow" size={18}/></Link>)}</div>
-  {quick.length>0&&<Card title="Quick actions"><div className="quick-grid">{quick.map(q=><Link className={`quick-action ${q.tone||''}`} to={q.to} key={q.label}><Icon name={q.icon} size={24}/><span>{q.label}</span></Link>)}</div></Card>}
-  <div className="grid-2"><Card title="Your authority"><div className="authority-summary"><div className="authority-big">{accessList.length}</div><div><strong>Assigned permissions</strong><p>These permissions come from your Hayat role and backend policy. The web portal does not grant extra authority.</p></div></div></Card><Card title="Security rule"><div className="security-note"><Icon name="shield" size={28}/><div><strong>Role-based access is enforced</strong><p>You only see modules allowed by your role and permissions. Hidden modules are not part of your workspace.</p></div></div></Card></div>
- </>;
+  const a=useAuth();
+  const p=a.provider;
+  if(!p)return null;
+  const config=configs[p.role]??fallback(p.role);
+  const permissions=new Set(p.permissions??[]);
+  const actions=config.actions.filter(x=>!x.permission||permissions.has(x.permission));
+
+  return <div className="role-dashboard-page">
+    <section className="hero-panel">
+      <div>
+        <span className="hero-kicker">{ROLE_LABELS[p.role]||p.role.replaceAll('_',' ')}</span>
+        <h1>{config.headline}</h1>
+        <p>{config.subheadline}</p>
+      </div>
+      <div className="hero-person">
+        <div className="hero-avatar">{(p.full_name||'H').slice(0,1).toUpperCase()}</div>
+        <div><small>Signed in as</small><strong>{p.full_name||'Hayat User'}</strong>{p.department_name&&<span>{p.department_name}</span>}</div>
+      </div>
+    </section>
+
+    <section className="dashboard-metrics">
+      {config.metrics.map(m=><div className="dashboard-metric-card" key={m.label}>
+        <div className={`dashboard-metric-icon ${m.tone}`}><Icon name={m.icon} size={22}/></div>
+        <div><span>{m.label}</span><strong>{m.value}</strong><small>{m.note}</small></div>
+      </div>)}
+    </section>
+
+    <section className="dashboard-section">
+      <div className="section-heading"><div><span>QUICK ACTIONS</span><h2>What do you want to do?</h2></div><small>Only actions allowed for your account are shown.</small></div>
+      <div className="action-card-grid">
+        {actions.map(x=><Link to={x.to} className="action-card" key={x.title}>
+          <div className={`action-card-icon ${x.tone}`}><Icon name={x.icon} size={24}/></div>
+          <div><h3>{x.title}</h3><p>{x.subtitle}</p></div>
+          <div className="action-arrow"><Icon name="arrow" size={18}/></div>
+        </Link>)}
+      </div>
+    </section>
+
+    <section className="dashboard-bottom-grid">
+      <div className="panel-card">
+        <div className="panel-title"><div><span>YOUR WORK</span><h3>Today’s focus</h3></div><Icon name="health" size={22}/></div>
+        <div className="focus-list">{config.focus.map((f,i)=><div key={f}><span className="focus-number">{String(i+1).padStart(2,'0')}</span><strong>{f}</strong><span className="focus-status">Available</span></div>)}</div>
+      </div>
+      <div className="panel-card secure-panel">
+        <div className="panel-title"><div><span>ACCESS CONTROL</span><h3>Your authority</h3></div><Icon name="shield" size={22}/></div>
+        <div className="permission-ring"><div><strong>{permissions.size}</strong><span>permissions</span></div></div>
+        <p>Your workspace is generated from your assigned role and backend permissions. Other departments and restricted management functions remain hidden.</p>
+      </div>
+    </section>
+
+    <section className="dashboard-footer-banner"><div className="footer-logo">H</div><div><strong>Better Healthcare. Together.</strong><span>Hayat keeps every role focused on the work they are authorized to perform.</span></div></section>
+  </div>;
 }
