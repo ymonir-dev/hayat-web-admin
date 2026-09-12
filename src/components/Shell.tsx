@@ -5,6 +5,23 @@ import { useAuth } from '../auth';
 import { canSeeNav, NAV_ITEMS, ROLE_LABELS } from '../access';
 import Icon from './Icon';
 
+const PLATFORM_NAV = [
+  {to:'/platform', label:'Dashboard', icon:'dashboard', end:true},
+  {to:'/platform/hospitals', label:'Hospitals', icon:'building'},
+  {to:'/platform/branches', label:'Branches', icon:'branches'},
+  {to:'/platform/staff', label:'Staff & Users', icon:'users'},
+  {to:'/platform/doctors', label:'Doctors', icon:'doctor'},
+  {to:'/platform/appointments', label:'Appointments', icon:'calendar'},
+  {to:'/platform/patients', label:'Patients', icon:'patients'},
+  {to:'/platform/departments', label:'Departments', icon:'departments'},
+  {to:'/platform/hr', label:'HR & Leave', icon:'hr'},
+  {to:'/platform/finance', label:'Finance', icon:'money'},
+  {to:'/platform/inventory', label:'Inventory', icon:'inventory'},
+  {to:'/platform/reports', label:'Reports', icon:'reports'},
+  {to:'/platform/communication', label:'Communication', icon:'communication'},
+  {to:'/platform/settings', label:'System Settings', icon:'settings'},
+];
+
 export default function Shell() {
   const auth = useAuth();
   const nav = useNavigate();
@@ -18,19 +35,19 @@ export default function Shell() {
     : ROLE_LABELS[p?.role??''] || (p?.role??'User').replaceAll('_',' ');
 
   const navItems = auth.platformAdmin
-    ? [{to:'/platform',label:'Platform Overview',icon:'dashboard'}]
+    ? PLATFORM_NAV
     : NAV_ITEMS.filter(i=>canSeeNav(p,i));
 
   return <div className="app-shell modern-shell">
     <aside className={`sidebar ${open?'open':''}`}>
       <div className="brand">
         <div className="brand-mark">H</div>
-        <div><strong>Hayat</strong><small>Healthcare Administration</small></div>
+        <div><strong>Hayat</strong><small>Web Administration</small></div>
         <button className="mobile-close" onClick={()=>setOpen(false)}><Icon name="close"/></button>
       </div>
 
       <div className="sidebar-section-title">WORKSPACE</div>
-      <nav>{navItems.map(i=><NavLink onClick={()=>setOpen(false)} key={i.to} className={({isActive})=>`nav-item ${isActive?'active':''}`} to={i.to}><Icon name={i.icon} size={19}/><span>{i.label}</span></NavLink>)}</nav>
+      <nav>{navItems.map((i:any)=><NavLink end={i.end} onClick={()=>setOpen(false)} key={i.to} className={({isActive})=>`nav-item ${isActive?'active':''}`} to={i.to}><Icon name={i.icon} size={19}/><span>{i.label}</span></NavLink>)}</nav>
 
       <div className="sidebar-spacer"/>
       <div className="sidebar-role-card">
@@ -45,7 +62,7 @@ export default function Shell() {
     <main className="main">
       <header className="topbar">
         <button className="mobile-menu" onClick={()=>setOpen(true)}><Icon name="menu"/></button>
-        <div className="global-search"><Icon name="search" size={18}/><span>Search your workspace…</span><kbd>Ctrl K</kbd></div>
+        <div className="global-search"><Icon name="search" size={18}/><span>Search anything... (hospitals, staff, patients, reports...)</span><kbd>Ctrl K</kbd></div>
         <div className="top-actions">
           <button className="top-icon" title="Notifications"><Icon name="bell" size={19}/><span className="notification-dot"/></button>
           <div className="top-role-badge"><span>{roleLabel}</span></div>
